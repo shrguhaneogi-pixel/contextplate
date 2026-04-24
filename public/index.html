@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextPlate | Smart Meals</title>
+  <meta name="description" content="Smart meals for busy days">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex items-center justify-center p-4">
+
+  <main 
+    x-data="contextPlate()" 
+    x-init="initApp()"
+    class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-slate-100 p-6 sm:p-8"
+    role="main">
+    
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">ContextPlate</h1>
+      <p class="text-slate-500 mt-1">Smart meals for busy days</p>
+    </header>
+
+    <!-- Input Panel -->
+    <section aria-labelledby="input-panel-heading" x-show="!result">
+      <h2 id="input-panel-heading" class="sr-only">Meal Preferences</h2>
+      
+      <!-- Time -->
+      <fieldset class="mb-6">
+        <legend class="block text-sm font-semibold text-slate-700 mb-2">Time</legend>
+        <div class="grid grid-cols-3 gap-2" role="group" aria-label="Time selection">
+          <template x-for="t in ['breakfast', 'lunch', 'dinner']">
+            <button 
+              type="button"
+              @click="time = t"
+              :aria-pressed="time === t"
+              :class="time === t ? 'bg-indigo-600 text-white border-indigo-600 focus:ring-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 focus:ring-indigo-500'"
+              class="capitalize border rounded-lg py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+              x-text="t">
+            </button>
+          </template>
+        </div>
+      </fieldset>
+
+      <!-- Mood -->
+      <fieldset class="mb-6">
+        <legend class="block text-sm font-semibold text-slate-700 mb-2">Mood</legend>
+        <div class="grid grid-cols-3 gap-2" role="group" aria-label="Mood selection">
+          <template x-for="m in ['lazy', 'healthy', 'indulgent']">
+            <button 
+              type="button"
+              @click="mood = m"
+              :aria-pressed="mood === m"
+              :class="mood === m ? 'bg-indigo-600 text-white border-indigo-600 focus:ring-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 focus:ring-indigo-500'"
+              class="capitalize border rounded-lg py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+              x-text="m">
+            </button>
+          </template>
+        </div>
+      </fieldset>
+
+      <!-- Budget -->
+      <fieldset class="mb-8">
+        <legend class="block text-sm font-semibold text-slate-700 mb-2">Budget</legend>
+        <div class="grid grid-cols-3 gap-2" role="group" aria-label="Budget selection">
+          <template x-for="b in ['$', '$$', '$$$']">
+            <button 
+              type="button"
+              @click="budget = b"
+              :aria-pressed="budget === b"
+              :class="budget === b ? 'bg-indigo-600 text-white border-indigo-600 focus:ring-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 focus:ring-indigo-500'"
+              class="border rounded-lg py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+              x-text="b">
+            </button>
+          </template>
+        </div>
+      </fieldset>
+
+      <!-- Error Message -->
+      <div x-show="error" x-cloak class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg" role="alert">
+        <span x-text="error"></span>
+      </div>
+
+      <!-- CTA Button -->
+      <button 
+        @click="getRecommendation()" 
+        :disabled="loading"
+        :aria-busy="loading"
+        class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-75 flex justify-center items-center">
+        <span x-show="!loading">Get Recommendation</span>
+        <svg x-show="loading" x-cloak class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+    </section>
+
+    <!-- Output Card -->
+    <section aria-labelledby="output-heading" x-show="result" x-cloak class="animate-fade-in">
+      <h2 id="output-heading" class="sr-only">Your Recommendation</h2>
+      
+      <div class="bg-indigo-50 rounded-xl p-5 mb-4 border border-indigo-100">
+        <span class="uppercase tracking-wide text-indigo-600 text-xs font-bold mb-1 block">We recommend</span>
+        <h3 class="text-2xl font-bold text-slate-900 capitalize mb-4" x-text="result?.mealType"></h3>
+        
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+          <h4 class="font-bold text-slate-800 text-lg flex justify-between items-center">
+            <span x-text="result?.restaurant?.name"></span>
+          </h4>
+          
+          <div class="mt-2 text-sm text-slate-600 flex flex-col gap-1">
+            <div class="flex items-center gap-1">
+              <span aria-label="Rating">⭐ <span x-text="result?.restaurant?.rating || 'N/A'"></span></span>
+              <span aria-hidden="true" class="mx-1">•</span>
+              <span class="text-green-600 font-medium" x-text="result?.restaurant?.priceLevel || budget"></span>
+              <!-- Optional distance display if available from backend -->
+              <template x-if="result?.restaurant?.distance">
+                <span class="flex items-center">
+                  <span aria-hidden="true" class="mx-1">•</span>
+                  <span x-text="result.restaurant.distance"></span>
+                </span>
+              </template>
+            </div>
+            <div x-text="result?.restaurant?.address"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <button 
+          @click="showExplanation = !showExplanation"
+          :aria-expanded="showExplanation"
+          aria-controls="explanation-text"
+          class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center focus:outline-none focus:underline">
+          Why this?
+          <svg class="w-4 h-4 ml-1 transition-transform" :class="showExplanation ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        
+        <div id="explanation-text" x-show="showExplanation" x-collapse x-cloak class="mt-2 text-slate-600 text-sm italic border-l-4 border-indigo-200 pl-3">
+          <p x-text="result?.explanation"></p>
+        </div>
+      </div>
+
+      <button 
+        @click="reset()"
+        class="w-full bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+        Start Over
+      </button>
+    </section>
+  </main>
+
+  <!-- Alpine Plugin for smooth collapse -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+
+  <script>
+    function contextPlate() {
+      return {
+        time: 'lunch',
+        mood: 'lazy',
+        budget: '$$',
+        loading: false,
+        error: null,
+        result: null,
+        showExplanation: false,
+        coords: { lat: null, lng: null },
+
+        initApp() {
+          this.autoSetTime();
+          this.fetchLocation();
+        },
+
+        autoSetTime() {
+          const hour = new Date().getHours();
+          if (hour >= 5 && hour < 11) this.time = 'breakfast';
+          else if (hour >= 11 && hour < 16) this.time = 'lunch';
+          else this.time = 'dinner';
+        },
+
+        fetchLocation() {
+          if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                this.coords.lat = pos.coords.latitude;
+                this.coords.lng = pos.coords.longitude;
+              },
+              (err) => {
+                // Fallback to a default location (e.g., Central Park, NY)
+                this.coords.lat = 40.7812;
+                this.coords.lng = -73.9665;
+                
+                let errorMsg = "Unable to access location. ";
+                if (err.code === err.PERMISSION_DENIED) {
+                  errorMsg += "Permission was denied.";
+                } else if (err.code === err.POSITION_UNAVAILABLE) {
+                  errorMsg += "Location information is unavailable.";
+                } else if (err.code === err.TIMEOUT) {
+                  errorMsg += "The request timed out.";
+                }
+                
+                this.error = errorMsg + " Using default location (New York).";
+              },
+              { timeout: 10000, enableHighAccuracy: false }
+            );
+          } else {
+            this.coords.lat = 40.7812;
+            this.coords.lng = -73.9665;
+            this.error = "Geolocation is not supported by your browser. Using default location (New York).";
+          }
+        },
+
+        async getRecommendation() {
+          this.loading = true;
+          this.error = null;
+          
+          try {
+            const response = await fetch('/api/recommend', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                time: this.time,
+                mood: this.mood,
+                budget: this.budget,
+                lat: this.coords.lat,
+                lng: this.coords.lng
+              })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.error || 'Failed to fetch recommendation.');
+            
+            this.result = data.data;
+            this.showExplanation = false;
+          } catch (err) {
+            this.error = err.message;
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        reset() {
+          this.result = null;
+          this.error = null;
+          this.showExplanation = false;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
