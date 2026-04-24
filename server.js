@@ -9,6 +9,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Trust Cloud Run's proxy so express-rate-limit correctly identifies IPs
+app.set('trust proxy', 1);
+
 // Security: Basic Rate Limiting to prevent abuse
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -48,7 +51,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 async function getRestaurant(mealType, lat, lng, budget) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey || apiKey.includes('your_google')) {
+  if (!apiKey || apiKey.includes('your_google') || apiKey === 'your_key') {
     return {
       name: `Mock ${mealType} Spot`,
       address: '123 Test Ave',
@@ -97,7 +100,7 @@ async function getRestaurant(mealType, lat, lng, budget) {
 
 async function generateExplanation(mealType, placeName, mood, time) {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.includes('your_gemini')) {
+  if (!apiKey || apiKey.includes('your_gemini') || apiKey === 'your_key') {
     return `Because you're feeling ${mood} at ${time}, ${placeName} is the perfect choice for a ${mealType}.`;
   }
 
