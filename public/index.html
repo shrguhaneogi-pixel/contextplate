@@ -6,6 +6,9 @@
   <title>ContextPlate | Smart Meals</title>
   <meta name="description" content="Smart meals for busy days">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine Plugins -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+  <!-- Alpine Core -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
   <style>
     [x-cloak] { display: none !important; }
@@ -153,9 +156,6 @@
     </section>
   </main>
 
-  <!-- Alpine Plugin for smooth collapse -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-
   <script>
     function contextPlate() {
       return {
@@ -216,6 +216,9 @@
           this.loading = true;
           this.error = null;
           
+          const payloadLat = this.coords.lat !== null ? this.coords.lat : 40.7812;
+          const payloadLng = this.coords.lng !== null ? this.coords.lng : -73.9665;
+          
           try {
             const response = await fetch('/api/recommend', {
               method: 'POST',
@@ -224,8 +227,8 @@
                 time: this.time,
                 mood: this.mood,
                 budget: this.budget,
-                lat: this.coords.lat,
-                lng: this.coords.lng
+                lat: payloadLat,
+                lng: payloadLng
               })
             });
 
