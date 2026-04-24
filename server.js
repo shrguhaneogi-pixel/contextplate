@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Security: Basic Rate Limiting to prevent abuse
 const apiLimiter = rateLimit({
